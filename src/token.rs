@@ -1,8 +1,6 @@
 use rsocket_rust::utils::Writeable;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 
-const MAX_TOKEN_TAG_LEN: usize = 0x7F;
-
 #[derive(Debug, Clone)]
 pub struct TOKENMetadata {
     Authentication: Vec<String>,
@@ -17,10 +15,6 @@ impl TOKENMetadataBuilder {
         self.push(String::from(Authentication))
     }
     pub fn push(mut self, Authentication: String) -> Self {
-       /* assert!(
-            Authentication.len() <= MAX_TOKEN_TAG_LEN,
-            "exceeded maximum routing tag length!"
-        );*/
         self.inner.Authentication.push(Authentication);
         self
     }

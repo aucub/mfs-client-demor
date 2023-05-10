@@ -10,9 +10,9 @@ mod token;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let token=String::from("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhYWExNjA5Ny0wNzI4LTQ1YTItYTQ1MC1jMTMxMGJjMmQ0OTEiLCJpc3MiOiIwYzU5OTg5ZDM5NzAzODBhZTE2ODg4MDY4NmM0YTA3MCIsInN1YiI6IjBjNTk5ODlkMzk3MDM4MGFlMTY4ODgwNjg2YzRhMDcwIiwiZXhwIjoxNjg0MjUwNDk3LCJhdWQiOiJtZnMiLCJzY29wZSI6WyJ1c2VyTWFuIiwiZ2VuZXJhdGVKd3QiLCJzZWFyY2hPbmxpbmUiLCJyb2xlIiwiY29ubmVjdCIsInB1c2giLCJwdWJsaXNoIiwiY29uc3VtZSIsInF1ZXJ5Il19.2hfCRCUaTjR1HRLren6dfZ7LwQ3Z2uw__-_lvwEZP9M");
+    const TOKEN: String = String::from("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhYWExNjA5Ny0wNzI4LTQ1YTItYTQ1MC1jMTMxMGJjMmQ0OTEiLCJpc3MiOiIwYzU5OTg5ZDM5NzAzODBhZTE2ODg4MDY4NmM0YTA3MCIsInN1YiI6IjBjNTk5ODlkMzk3MDM4MGFlMTY4ODgwNjg2YzRhMDcwIiwiZXhwIjoxNjg0MjUwNDk3LCJhdWQiOiJtZnMiLCJzY29wZSI6WyJ1c2VyTWFuIiwiZ2VuZXJhdGVKd3QiLCJzZWFyY2hPbmxpbmUiLCJyb2xlIiwiY29ubmVjdCIsInB1c2giLCJwdWJsaXNoIiwiY29uc3VtZSIsInF1ZXJ5Il19.2hfCRCUaTjR1HRLren6dfZ7LwQ3Z2uw__-_lvwEZP9M");
     let routing = RoutingMetadata::builder().push("connect".into()).build();
-    let authentication=TOKENMetadata::builder().push(token).build();
+    let authentication = TOKENMetadata::builder().push(TOKEN).build();
     let cm = CompositeMetadata::builder()
         .push(MimeType::MESSAGE_X_RSOCKET_ROUTING_V0, routing.bytes())
         .push(MimeType::from("message/x.rsocket.authentication.v0"), authentication.bytes())
@@ -21,14 +21,19 @@ async fn main() -> Result<()> {
     let cli = RSocketFactory::connect()
         .setup(setup)
         .metadata_mime_type(MimeType::MESSAGE_X_RSOCKET_COMPOSITE_METADATA_V0)
+        .acceptor(Box::new(|| {
+            Box::new(EchoRSocket)
+        }))
         .transport(TcpClientTransport::from("127.0.0.1:9898"))
         .start()
         .await?;
     let rsocket: Box<dyn RSocket> = Box::new(cli);
     let requester = Requester::from(rsocket);
-    /*requester.route("consume")
+    let authentication1 = TOKENMetadata::builder().push(TOKEN).build();
+    requester.route("consume")
+        .metadata_raw(authentication1.bytes(), MimeType::from("message/x.rsocket.authentication.v0"))
         .data("{'queueType':'classic','queue':'test2','manual':'false'}")
-        .retrieve_flux();*/
+        .retrieve_flux().block();
     println!("OK");
     Ok(())
 }
